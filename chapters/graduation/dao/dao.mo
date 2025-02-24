@@ -54,9 +54,8 @@ actor {
         public shared ({ caller }) func registerMember(member : Member) : async Result<(), Text> {
           switch (members.get(caller)) {
             case (null) {
-                let result = await faucetCanister.mint(caller, 10);
-                // ledger.put(caller, 10);
                 members.put(caller, member);
+                let result = await faucetCanister.mint(caller, 10);
                 return #ok();
             };
             case (?member) {
@@ -67,6 +66,14 @@ actor {
 
         public query func getAllMembers() : async [Member] {
             return Iter.toArray(members.vals());
+        };
+
+        public query func getAllEntries() : async [(Principal, Member)] {
+            return Iter.toArray(members.entries());
+        };
+
+        public query ({ caller }) func getCaller() : async Principal {
+            return caller;
         };
 
         // Get the member with the given principal
@@ -101,7 +108,16 @@ actor {
         // Returns an error if the student does not exist or is not a student
         // Returns an error if the caller is not a mentor
         public shared ({ caller }) func graduate(student : Principal) : async Result<(), Text> {
-                return #err("Not implemented");
+          switch (members.get(student)) {
+            case (null) {
+                return #err("Member does not exist");
+            };
+            case (? member) {
+              let updateMember = {name = member.name; role = #Graduate;};
+              members.put(caller, updateMember);
+              return #ok();
+            };
+          };
         };
 
         // Create a new proposal and returns its id
