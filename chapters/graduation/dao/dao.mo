@@ -1,8 +1,10 @@
 import Result "mo:base/Result";
 import HashMap "mo:base/HashMap";
+import Hash "mo:base/Hash";
 import Option "mo:base/Option";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Principal "mo:base/Principal";
@@ -27,6 +29,7 @@ actor {
         stable let name = "Blurtopian";
         // let ledger = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
         let members = HashMap.HashMap<Principal, Member>(0, Principal.equal, Principal.hash);
+        let proposals = HashMap.HashMap<ProposalId, Proposal>(0, Nat.equal, Hash.hash);
 
         let faucetCanister : actor {
             mint : shared (owner : Principal, amount : Nat) -> async Result<(), Text>;
@@ -136,24 +139,66 @@ actor {
         // Create a new proposal and returns its id
         // Returns an error if the caller is not a mentor or doesn't own at least 1 MBC token
         public shared ({ caller }) func createProposal(content : ProposalContent) : async Result<ProposalId, Text> {
-                return #err("Not implemented");
+          switch (members.get(caller)) {
+            case (null) {
+              return #err("Caller is not a member");
+            };
+            case (? callerRecord) {
+              if (callerRecord.role != #Mentor) {
+                return #err("Caller is not a mentor");
+              };
+            };
+          };
+
+          let result = await faucetCanister.balanceOf(caller);
+          if (result < 1) {
+            return #err("Caller does not have enough MBC tokens");
+          };
+
+          let _burnResult = await faucetCanister.burn(caller, 1);
+
+          let proposalId = proposals.size();
+          let proposal = {
+            id = proposalId;
+            content = content;
+            creator = caller;
+            created = Time.now();
+            executed = null;
+            votes = [];
+            voteScore = 0;
+            status = #Open;
+          };
+          proposals.put(proposalId, proposal);
+          return #ok(proposalId);
         };
 
         // Get the proposal with the given id
         // Returns an error if the proposal does not exist
         public query func getProposal(id : ProposalId) : async Result<Proposal, Text> {
-                return #err("Not implemented");
+          switch (proposals.get(id)) {
+            case (null) {
+                return #err("Proposal does not exist");
+            };
+            case (? proposal) {
+                return #ok(proposal);
+            };
+          };
+          return #err("Not implemented");
         };
 
         // Returns all the proposals
         public query func getAllProposal() : async [Proposal] {
-                return [];
+          return Iter.toArray(proposals.vals());
+        };
+
+        public query func getAllProposalEntries() : async [(ProposalId, Proposal)] {
+            return Iter.toArray(proposals.entries());
         };
 
         // Vote for the given proposal
         // Returns an error if the proposal does not exist or the member is not allowed to vote
         public shared ({ caller }) func voteProposal(proposalId : ProposalId, yesOrNo : Bool) : async Result<(), Text> {
-                return #err("Not implemented");
+          return #err("Not implemented");
         };
 
         // Returns the Principal ID of the Webpage canister associated with this DAO canister
