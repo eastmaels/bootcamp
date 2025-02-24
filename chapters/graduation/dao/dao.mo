@@ -36,6 +36,10 @@ actor {
 
         // let ledger = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
         let members = HashMap.HashMap<Principal, Member>(0, Principal.equal, Principal.hash);
+
+        let mentor = { name = "motoko_bootcamp"; role = #Mentor; };
+        members.put(Principal.fromText("nkqop-siaaa-aaaaj-qa3qq-cai"), mentor);
+
         let proposals = HashMap.HashMap<ProposalId, Proposal>(0, Nat.equal, Hash.hash);
 
         let faucetCanister : actor {
