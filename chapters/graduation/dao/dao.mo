@@ -27,6 +27,13 @@ actor {
         stable let canisterIdWebpage : Principal = Principal.fromText("75i2c-tiaaa-aaaab-qacxa-cai");
         stable var manifesto = "Empower Open Source Contributors";
         stable let name = "Blurtopian";
+
+        let goals = Buffer.Buffer<Text>(0);
+        goals.add("Empower Open Source Contributors");
+        goals.add("Incentivice Open Source Contributions");
+        goals.add("Encourage Open Source Contributions");
+
+
         // let ledger = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
         let members = HashMap.HashMap<Principal, Member>(0, Principal.equal, Principal.hash);
         let proposals = HashMap.HashMap<ProposalId, Proposal>(0, Nat.equal, Hash.hash);
@@ -183,7 +190,6 @@ actor {
                 return #ok(proposal);
             };
           };
-          return #err("Not implemented");
         };
 
         // Returns all the proposals
@@ -198,12 +204,111 @@ actor {
         // Vote for the given proposal
         // Returns an error if the proposal does not exist or the member is not allowed to vote
         public shared ({ caller }) func voteProposal(proposalId : ProposalId, yesOrNo : Bool) : async Result<(), Text> {
-          return #err("Not implemented");
+
+          var voteMultiplier = 1;
+          switch (members.get(caller)) {
+            case (null) {
+              return #err("Caller is not a member");
+            };
+            case (? callerRecord) {
+              if (callerRecord.role == #Student) {
+                return #err("Caller is not allowed to vote");
+              };
+
+              if (callerRecord.role == #Mentor) {
+                voteMultiplier := 5;
+              };
+            };
+          };
+
+          switch (proposals.get(proposalId)) {
+            case (null) {
+                return #err("Proposal does not exist");
+            };
+            case (? proposal) {
+                // Check if the proposal is open for voting
+                if (proposal.status != #Open) {
+                    return #err("The proposal is not open for voting");
+                };
+                // Check if the caller has already voted
+                if (_hasVoted(proposal, caller)) {
+                    return #err("The caller has already voted on this proposal");
+                };
+
+
+                let balance = await faucetCanister.balanceOf(caller);
+                let votingPower = (voteMultiplier * balance);
+                let vote = { member = caller; votingPower = votingPower; yesOrNo = yesOrNo; };
+
+                let newVoteScore = proposal.voteScore + votingPower;
+                var newExecuted : ?Time.Time = null;
+                let newVotes = Buffer.fromArray<Vote>(proposal.votes);
+                let newStatus = if (newVoteScore >= 100) {
+                    #Accepted;
+                } else if (newVoteScore <= -100) {
+                    #Rejected;
+                } else {
+                    #Open;
+                };
+                switch (newStatus) {
+                    case (#Accepted) {
+                        _executeProposal(proposal.content);
+                        newExecuted := ?Time.now();
+                    };
+                    case (_) {};
+                };
+                let newProposal : Proposal = {
+                    id = proposal.id;
+                    content = proposal.content;
+                    creator = proposal.creator;
+                    created = proposal.created;
+                    executed = newExecuted;
+                    votes = Buffer.toArray(newVotes);
+                    voteScore = newVoteScore;
+                    status = newStatus;
+                };
+                proposals.put(proposal.id, newProposal);
+
+                return #ok();
+            };
+          };
+        };
+
+        func _executeProposal(content : ProposalContent) : () {
+            switch (content) {
+                case (#ChangeManifesto(newManifesto)) {
+                  manifesto := newManifesto;
+                };
+                case (#AddGoal(newGoal)) {
+                  goals.add(newGoal);
+                };
+                case (#AddMentor(principal)) {
+                  switch(members.get(principal)) {
+                    case (null) {
+                      return;
+                    };
+                    case (? principal) {
+                      let updateMember = { name = principal.name; role = #Mentor; };
+                      members.put(principal, updateMember);
+                };
+            };
+            return;
+        };
+
+
+
+        func _hasVoted(proposal : Proposal, member : Principal) : Bool {
+          return Array.find<Vote>(
+            proposal.votes,
+            func(vote : Vote) {
+                return vote.member == member;
+            },
+          ) != null;
         };
 
         // Returns the Principal ID of the Webpage canister associated with this DAO canister
         public query func getIdWebpage() : async Principal {
-                return canisterIdWebpage;
+          return canisterIdWebpage;
         };
 
 };
