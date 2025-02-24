@@ -89,8 +89,6 @@ actor {
           };
         };
 
-        // Get the member with the given principal
-        // Returns an error if the member does not exist
         public func getMemberBalance(p : Principal) : async Result<Nat, Text> {
           switch (members.get(p)) {
             case (null) {
@@ -108,13 +106,28 @@ actor {
         // Returns an error if the student does not exist or is not a student
         // Returns an error if the caller is not a mentor
         public shared ({ caller }) func graduate(student : Principal) : async Result<(), Text> {
+          switch (members.get(caller)) {
+            case (null) {
+              return #err("Caller is not a member");
+            };
+            case (? callerRecord) {
+              if (callerRecord.role != #Mentor) {
+                return #err("Caller is not a mentor");
+              };
+            };
+          };
+
           switch (members.get(student)) {
             case (null) {
                 return #err("Member does not exist");
             };
-            case (? member) {
-              let updateMember = {name = member.name; role = #Graduate;};
-              members.put(caller, updateMember);
+            case (? studentRecord) {
+              if (studentRecord.role != #Student) {
+                return #err("Member is not a student");
+              };
+
+              let updateMember = { name = studentRecord.name; role = #Graduate; };
+              members.put(student, updateMember);
               return #ok();
             };
           };
