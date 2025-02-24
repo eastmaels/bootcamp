@@ -251,24 +251,23 @@ actor {
                     #Open;
                 };
                 switch (newStatus) {
-                    case (#Accepted) {
-                        _executeProposal(proposal.content);
-                        newExecuted := ?Time.now();
-                    };
-                    case (_) {};
+                  case (#Accepted) {
+                    _executeProposal(proposal.content);
+                    newExecuted := ?Time.now();
+                  };
+                  case (_) {};
                 };
                 let newProposal : Proposal = {
-                    id = proposal.id;
-                    content = proposal.content;
-                    creator = proposal.creator;
-                    created = proposal.created;
-                    executed = newExecuted;
-                    votes = Buffer.toArray(newVotes);
-                    voteScore = newVoteScore;
-                    status = newStatus;
+                  id = proposal.id;
+                  content = proposal.content;
+                  creator = proposal.creator;
+                  created = proposal.created;
+                  executed = newExecuted;
+                  votes = Buffer.toArray(newVotes);
+                  voteScore = newVoteScore;
+                  status = newStatus;
                 };
                 proposals.put(proposal.id, newProposal);
-
                 return #ok();
             };
           };
@@ -282,26 +281,27 @@ actor {
                 case (#AddGoal(newGoal)) {
                   goals.add(newGoal);
                 };
-                case (#AddMentor(principal)) {
-                  switch(members.get(principal)) {
+                case (#AddMentor(principalRecord)) {
+
+                  switch(members.get(principalRecord)) {
                     case (null) {
                       return;
                     };
-                    case (? principal) {
-                      let updateMember = { name = principal.name; role = #Mentor; };
-                      members.put(principal, updateMember);
+                    case (? memberRecord) {
+                      let updateMember = { name = memberRecord.name; role = #Mentor; };
+                      members.put(principalRecord, updateMember);
+                      return;
+                    };
+                  };
                 };
             };
-            return;
         };
-
-
 
         func _hasVoted(proposal : Proposal, member : Principal) : Bool {
           return Array.find<Vote>(
             proposal.votes,
             func(vote : Vote) {
-                return vote.member == member;
+              return vote.member == member;
             },
           ) != null;
         };
