@@ -33,7 +33,7 @@
       "type": "motoko"
     },
     "graduation_token": {
-      "main": "chapters/graduation/token/main.mo",
+      "main": "chapters/graduation/token/token.mo",
       "type": "motoko"
     },
     "graduation_webpage": {

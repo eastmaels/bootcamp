@@ -13,11 +13,11 @@ actor Webpage {
     stable var manifesto = "Empower Open Source Contributors";
     stable let name = "Blurtopian";
 
-    let daoCanister = actor("75i2c-tiaaa-aaaab-qacxa-cai") : actor {
-        getName : shared () -> async Text;
-        getManifesto : shared () -> async Text;
+    let daoCanister : actor {
+        getName : shared query () -> async Text;
+        getManifesto : shared query () -> async Text;
         setManifesto : shared (id : Text) -> async Result.Result<(), Text>;
-    };
+    } = actor("75i2c-tiaaa-aaaab-qacxa-cai");
 
 
     /////////////////
@@ -37,7 +37,6 @@ actor Webpage {
     func _getWebpage() : Text {
         // let name = await daoCanister.getName();
         // let manifesto = await daoCanister.getManifesto();
-
 
         var webpage = "<style>" #
         "body { text-align: center; font-family: Arial, sans-serif; background-color: #f0f8ff; color: #333; }" #

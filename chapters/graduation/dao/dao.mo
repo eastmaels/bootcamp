@@ -1,8 +1,13 @@
 import Result "mo:base/Result";
+import HashMap "mo:base/HashMap";
+import Option "mo:base/Option";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
+import Iter "mo:base/Iter";
 import Principal "mo:base/Principal";
+import Map "mo:map/Map";
+import { phash } "mo:map/Map";
 import Nat "mo:base/Nat";
 import Types "types";
 actor {
@@ -20,6 +25,14 @@ actor {
         stable let canisterIdWebpage : Principal = Principal.fromText("75i2c-tiaaa-aaaab-qacxa-cai");
         stable var manifesto = "Empower Open Source Contributors";
         stable let name = "Blurtopian";
+        // let ledger = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
+        let members = HashMap.HashMap<Principal, Member>(0, Principal.equal, Principal.hash);
+
+        let faucetCanister : actor {
+            mint : shared (owner : Principal, amount : Nat) -> async Result<(), Text>;
+            burn : shared (owner : Principal, amount : Nat) -> async Result<(), Text>;
+            balanceOf : shared query (owner : Principal) -> async Nat;
+        } = actor("jaamb-mqaaa-aaaaj-qa3ka-cai");
 
         public shared query func getName() : async Text {
             return name;
@@ -39,14 +52,50 @@ actor {
         // New members are always Student
         // Returns an error if the member already exists
         public shared ({ caller }) func registerMember(member : Member) : async Result<(), Text> {
-                return #err("Not implemented");
+          switch (members.get(caller)) {
+            case (null) {
+                let result = await faucetCanister.mint(caller, 10);
+                // ledger.put(caller, 10);
+                members.put(caller, member);
+                return #ok();
+            };
+            case (?member) {
+                return #err("Member already exists");
+            };
+          };
+        };
+
+        public query func getAllMembers() : async [Member] {
+            return Iter.toArray(members.vals());
         };
 
         // Get the member with the given principal
         // Returns an error if the member does not exist
         public query func getMember(p : Principal) : async Result<Member, Text> {
-                return #err("Not implemented");
+          switch (members.get(p)) {
+            case (null) {
+                return #err("Member does not exist");
+            };
+            case (?member) {
+                return #ok(member);
+            };
+          };
         };
+
+        // Get the member with the given principal
+        // Returns an error if the member does not exist
+        public func getMemberBalance(p : Principal) : async Result<Nat, Text> {
+          switch (members.get(p)) {
+            case (null) {
+                return #err("Member does not exist");
+            };
+            case (?member) {
+              let result = await faucetCanister.balanceOf(p);
+              return #ok(result);
+            };
+          };
+        };
+
 
         // Graduate the student with the given principal
         // Returns an error if the student does not exist or is not a student
