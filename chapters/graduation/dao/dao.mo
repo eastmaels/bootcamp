@@ -1,5 +1,7 @@
 import Result "mo:base/Result";
+import Array "mo:base/Array";
 import Text "mo:base/Text";
+import Buffer "mo:base/Buffer";
 import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
 import Types "types";
@@ -15,24 +17,21 @@ actor {
         type HttpResponse = Types.HttpResponse;
 
         // The principal of the Webpage canister associated with this DAO canister (needs to be updated with the ID of your Webpage canister)
-        stable let canisterIdWebpage : Principal = Principal.fromText("aaaaa-aa");
-        stable var manifesto = "Your manifesto";
-        stable let name = "Your DAO";
-        stable var goals = [];
+        stable let canisterIdWebpage : Principal = Principal.fromText("75i2c-tiaaa-aaaab-qacxa-cai");
+        stable var manifesto = "Empower Open Source Contributors";
+        stable let name = "Blurtopian";
 
-        // Returns the name of the DAO
-        public query func getName() : async Text {
-                return "Not implemented";
+        public shared query func getName() : async Text {
+            return name;
         };
 
-        // Returns the manifesto of the DAO
-        public query func getManifesto() : async Text {
-                return "Not implemented";
+        public shared query func getManifesto() : async Text {
+            return manifesto;
         };
 
-        // Returns the goals of the DAO
-        public query func getGoals() : async [Text] {
-                return [];
+        public func setManifesto(newManifesto : Text) : async () {
+            manifesto := newManifesto;
+            return;
         };
 
         // Register a new member in the DAO with the given name and principal of the caller

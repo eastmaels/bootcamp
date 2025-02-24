@@ -29,7 +29,7 @@
       "type": "motoko"
     },
     "graduation_dao" : {
-      "main": "chapters/graduation/dao/main.mo",
+      "main": "chapters/graduation/dao/dao.mo",
       "type": "motoko"
     },
     "graduation_token": {
@@ -37,7 +37,7 @@
       "type": "motoko"
     },
     "graduation_webpage": {
-      "main": "chapters/graduation/webpage/main.mo",
+      "main": "chapters/graduation/webpage/webpage.mo",
       "type": "motoko"
     }
   },

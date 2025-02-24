@@ -1,4 +1,17 @@
 module {
+
+    /////////////////
+    // PROJECT #5 //
+    ///////////////
+    public type DAOStats = {
+        name : Text;
+        manifesto : Text;
+        goals : [Text];
+        members : [Text];
+        logo : Text;
+        numberOfMembers : Nat;
+    };
+
     public type HeaderField = (Text, Text);
     public type HttpRequest = {
         body : Blob;
